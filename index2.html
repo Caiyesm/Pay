@@ -1,0 +1,2686 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>支付管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#165DFF',
+                        secondary: '#6B7280',
+                        success: '#10B981',
+                        warning: '#F59E0B',
+                        danger: '#EF4444',
+                        info: '#3B82F6',
+                        dark: '#1F2937',
+                        light: '#F8FAFC'
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .hover-lift {
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+            }
+            .hover-lift:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            }
+            .api-badge {
+                @apply px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800;
+            }
+            .status-success {
+                @apply px-2 py-1 text-xs rounded-full bg-green-100 text-green-800;
+            }
+            .status-warning {
+                @apply px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800;
+            }
+            .status-danger {
+                @apply px-2 py-1 text-xs rounded-full bg-red-100 text-red-800;
+            }
+            .nav-item-active {
+                @apply bg-gray-700 text-white;
+            }
+            .nav-item-inactive {
+                @apply text-gray-300 hover:bg-gray-700;
+            }
+            .bg-table-header {
+                @apply bg-gray-50;
+            }
+        }
+    </style>
+</head>
+
+<body class="font-inter bg-gray-50 min-h-screen flex overflow-hidden">
+    <!-- 侧边栏 -->
+    <aside id="sidebar" class="bg-gray-800 text-white w-64 h-screen fixed left-0 top-0 transform transition-transform duration-300 ease-in-out z-50 overflow-y-auto">
+        <!-- 品牌标识 -->
+        <div class="p-4 border-b border-gray-700">
+            <div class="flex items-center justify-between">
+                <h1 class="text-xl font-bold text-white">支付管理系统</h1>
+                <button onclick="toggleSidebar()" class="lg:hidden text-gray-400 hover:text-white">
+                    <i class="fa fa-times"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- 导航菜单 -->
+        <nav class="px-2 py-4 space-y-1">
+            <!-- 主页 -->
+            <a href="#dashboard" onclick="showSection('dashboard')" 
+               class="nav-item flex items-center px-4 py-3 nav-item-active rounded-lg transition-colors duration-200">
+                <i class="fa fa-home w-6 text-gray-400"></i>
+                <span class="ml-3">主页</span>
+            </a>
+            
+            <!-- 商户管理 -->
+            <div class="mt-4">
+                <button onclick="toggleSubmenu('merchant-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-building w-6 text-gray-400"></i>
+                        <span class="ml-3">商户管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="merchant-arrow"></i>
+                </button>
+                
+                <div id="merchant-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#merchant-list" onclick="showSection('merchant-list')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">商户列表</span>
+                    </a>
+                    <a href="#app-list" onclick="showSection('app-list')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">应用列表</span>
+                    </a>
+                    <a href="#onboarding-management" onclick="showSection('onboarding-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">进件管理</span>
+                    </a>
+                    <a href="#store-management" onclick="showSection('store-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">门店管理</span>
+                    </a>
+                    <a href="#member-center" onclick="showSection('member-center')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">会员中心</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 代理商管理 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('agent-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-users w-6 text-gray-400"></i>
+                        <span class="ml-3">代理商管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="agent-arrow"></i>
+                </button>
+                
+                <div id="agent-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#agent-list" onclick="showSection('agent-list')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">代理商列表</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 服务商管理 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('service-provider-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-handshake-o w-6 text-gray-400"></i>
+                        <span class="ml-3">服务商管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="service-provider-arrow"></i>
+                </button>
+                
+                <div id="service-provider-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#service-provider-list" onclick="showSection('service-provider-list')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">服务商列表</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 佣金管理 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('commission-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-percent w-6 text-gray-400"></i>
+                        <span class="ml-3">佣金管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="commission-arrow"></i>
+                </button>
+                
+                <div id="commission-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#operation-commission" onclick="showSection('operation-commission')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">运营佣金统计</span>
+                    </a>
+                    <a href="#withdrawal-application" onclick="showSection('withdrawal-application')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">提现申请管理</span>
+                    </a>
+                    <a href="#wallet-transactions" onclick="showSection('wallet-transactions')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">钱包流水</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 订单管理 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('order-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-list-alt w-6 text-gray-400"></i>
+                        <span class="ml-3">订单管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="order-arrow"></i>
+                </button>
+                
+                <div id="order-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#payment-orders" onclick="showSection('payment-orders')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">支付订单</span>
+                    </a>
+                    <a href="#refund-orders" onclick="showSection('refund-orders')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">退款订单</span>
+                    </a>
+                    <a href="#transfer-orders" onclick="showSection('transfer-orders')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">转账订单</span>
+                    </a>
+                    <a href="#merchant-notifications" onclick="showSection('merchant-notifications')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">商户通知</span>
+                    </a>
+                    <a href="#withdrawal-records" onclick="showSection('withdrawal-records')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">提现记录</span>
+                    </a>
+                    <a href="#direct-settlement-orders" onclick="showSection('direct-settlement-orders')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">直付通结算订单</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 结算管理 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('settlement-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-calculator w-6 text-gray-400"></i>
+                        <span class="ml-3">结算管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="settlement-arrow"></i>
+                </button>
+                
+                <div id="settlement-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <!-- 原有功能移至此处 -->
+                    <a href="#dashboard" onclick="showSection('dashboard')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">控制台</span>
+                    </a>
+                    <a href="#order-management" onclick="showSection('order-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">订单管理</span>
+                    </a>
+                    <a href="#in-transit-orders" onclick="showSection('in-transit-orders')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">在途订单</span>
+                    </a>
+                    <a href="#fund-management" onclick="showSection('fund-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">资金管理</span>
+                    </a>
+                    <a href="#account-opening" onclick="showSection('account-opening')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">开户进件</span>
+                    </a>
+                    <a href="#merchant-management" onclick="showSection('merchant-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">商户管理</span>
+                    </a>
+                    <a href="#reconciliation" onclick="showSection('reconciliation')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">对账管理</span>
+                    </a>
+                    <a href="#transaction-statistics" onclick="showSection('transaction-statistics')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">交易统计</span>
+                    </a>
+                    <a href="#system-settings" onclick="showSection('system-settings')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">系统设置</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 数据统计 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('statistics-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-bar-chart w-6 text-gray-400"></i>
+                        <span class="ml-3">数据统计</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="statistics-arrow"></i>
+                </button>
+                
+                <div id="statistics-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#transaction-reports" onclick="showSection('transaction-reports')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">交易报表</span>
+                    </a>
+                    <a href="#merchant-statistics" onclick="showSection('merchant-statistics')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">商户统计</span>
+                    </a>
+                    <a href="#agent-statistics" onclick="showSection('agent-statistics')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">代理商统计</span>
+                    </a>
+                    <a href="#service-provider-statistics" onclick="showSection('service-provider-statistics')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">服务商统计</span>
+                    </a>
+                    <a href="#channel-statistics" onclick="showSection('channel-statistics')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">通道统计</span>
+                    </a>
+                    <a href="#device-statistics" onclick="showSection('device-statistics')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">设备统计</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 支付配置 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('payment-config-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-cog w-6 text-gray-400"></i>
+                        <span class="ml-3">支付配置</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="payment-config-arrow"></i>
+                </button>
+                
+                <div id="payment-config-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#payment-interfaces" onclick="showSection('payment-interfaces')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">支付接口</span>
+                    </a>
+                    <a href="#payment-methods" onclick="showSection('payment-methods')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">支付方式</span>
+                    </a>
+                    <a href="#settlement-channels" onclick="showSection('settlement-channels')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">结算通道</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 分账管理 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('split-account-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-share-alt w-6 text-gray-400"></i>
+                        <span class="ml-3">分账管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="split-account-arrow"></i>
+                </button>
+                
+                <div id="split-account-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#account-group-management" onclick="showSection('account-group-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">账号组管理</span>
+                    </a>
+                    <a href="#receiving-account-management" onclick="showSection('receiving-account-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">收款账号管理</span>
+                    </a>
+                    <a href="#split-account-records" onclick="showSection('split-account-records')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">分账记录</span>
+                    </a>
+                    <a href="#split-account-return-records" onclick="showSection('split-account-return-records')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">分账回退记录</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 对账管理 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('reconciliation-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-balance-scale w-6 text-gray-400"></i>
+                        <span class="ml-3">对账管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="reconciliation-arrow"></i>
+                </button>
+                
+                <div id="reconciliation-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#reconciliation-batches" onclick="showSection('reconciliation-batches')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">对账批次</span>
+                    </a>
+                    <a href="#channel-statements" onclick="showSection('channel-statements')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">渠道账单</span>
+                    </a>
+                    <a href="#difference-statements" onclick="showSection('difference-statements')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">差异账单</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 设备配置 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('device-config-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-usb w-6 text-gray-400"></i>
+                        <span class="ml-3">设备配置</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="device-config-arrow"></i>
+                </button>
+                
+                <div id="device-config-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#code-cards" onclick="showSection('code-cards')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">码牌</span>
+                    </a>
+                    <a href="#cloud-speakers" onclick="showSection('cloud-speakers')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">云喇叭</span>
+                    </a>
+                    <a href="#cloud-printing" onclick="showSection('cloud-printing')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">云打印</span>
+                    </a>
+                    <a href="#cashier-plugins" onclick="showSection('cashier-plugins')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">收银插件</span>
+                    </a>
+                    <a href="#qr-pos" onclick="showSection('qr-pos')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">扫码POS</span>
+                    </a>
+                    <a href="#acquiring-device-management" onclick="showSection('acquiring-device-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">收单设备管理</span>
+                    </a>
+                    <a href="#face-scan-device-management" onclick="showSection('face-scan-device-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">刷脸设备管理</span>
+                    </a>
+                    <a href="#auxiliary-terminal-reporting" onclick="showSection('auxiliary-terminal-reporting')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">辅助终端报备</span>
+                    </a>
+                    <a href="#ruyi-lite-management" onclick="showSection('ruyi-lite-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">如意Lite管理</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- 系统管理 -->
+            <div class="mt-2">
+                <button onclick="toggleSubmenu('system-submenu')" 
+                        class="nav-item flex items-center justify-between px-4 py-3 nav-item-inactive w-full rounded-lg transition-colors duration-200">
+                    <div class="flex items-center">
+                        <i class="fa fa-cogs w-6 text-gray-400"></i>
+                        <span class="ml-3">系统管理</span>
+                    </div>
+                    <i class="fa fa-chevron-down w-4 text-gray-400 transition-transform duration-200" id="system-arrow"></i>
+                </button>
+                
+                <div id="system-submenu" class="hidden pl-6 mt-1 space-y-1">
+                    <a href="#user-role-management" onclick="showSection('user-role-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">用户角色管理</span>
+                    </a>
+                    <a href="#data-management" onclick="showSection('data-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">数据管理</span>
+                    </a>
+                    <a href="#system-configuration" onclick="showSection('system-configuration')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">系统配置</span>
+                    </a>
+                    <a href="#advertisement-management" onclick="showSection('advertisement-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">广告管理</span>
+                    </a>
+                    <a href="#notification-configuration" onclick="showSection('notification-configuration')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">通知配置</span>
+                    </a>
+                    <a href="#announcement-management" onclick="showSection('announcement-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">公告管理</span>
+                    </a>
+                    <a href="#system-logs" onclick="showSection('system-logs')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">系统日志</span>
+                    </a>
+                    <a href="#dictionary-management" onclick="showSection('dictionary-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">字典管理</span>
+                    </a>
+                    <a href="#version-management" onclick="showSection('version-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">版本管理</span>
+                    </a>
+                    <a href="#holiday-management" onclick="showSection('holiday-management')" 
+                       class="nav-item flex items-center px-4 py-2 nav-item-inactive rounded-lg transition-colors duration-200 text-sm">
+                        <span class="ml-1">节假日管理</span>
+                    </a>
+                </div>
+            </div>
+        </nav>
+    </aside>
+    
+    <!-- 主内容区域 -->
+    <div class="flex-1 ml-64 transition-all duration-300">
+        <!-- 顶部导航 -->
+        <header class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+            <div class="flex items-center justify-between px-6 py-4">
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleSidebar()" class="lg:hidden text-gray-600 hover:text-gray-900">
+                        <i class="fa fa-bars text-xl"></i>
+                    </button>
+                    <div>
+                        <h2 id="section-title" class="text-xl font-semibold text-gray-900">主页</h2>
+                        <p id="section-subtitle" class="text-sm text-gray-600">欢迎使用支付管理系统</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- 搜索框 -->
+                    <div class="relative hidden md:block">
+                        <input type="text" placeholder="搜索..." 
+                               class="w-64 pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <i class="fa fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    
+                    <!-- 通知 -->
+                    <button class="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-full">
+                        <i class="fa fa-bell text-xl"></i>
+                        <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                    </button>
+                    
+                    <!-- 用户菜单 -->
+                    <div class="relative">
+                        <button onclick="toggleUserMenu()" class="flex items-center space-x-3 p-2 hover:bg-gray-100 rounded-lg">
+                            <img src="https://picsum.photos/id/1005/40/40" alt="用户头像" class="w-8 h-8 rounded-full object-cover">
+                            <span class="text-sm font-medium text-gray-900">管理员</span>
+                            <i class="fa fa-chevron-down text-xs text-gray-400"></i>
+                        </button>
+                        
+                        <div id="user-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
+                            <a href="#profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">个人资料</a>
+                            <a href="#settings" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">账号设置</a>
+                            <div class="border-t border-gray-200 my-1"></div>
+                            <a href="#logout" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-50">退出登录</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- 内容区域 -->
+        <main class="px-6 py-8 space-y-6">
+            <!-- 主页 -->
+            <div id="dashboard" class="section-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- 交易总额 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">交易总额</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">¥1,234,567.89</p>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fa fa-arrow-up"></i> +12.5% 较上月
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-line-chart text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 订单数量 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">今日订单</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">1,234</p>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fa fa-arrow-up"></i> +8.3% 较昨日
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-shopping-cart text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 活跃商户 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">活跃商户</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">567</p>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fa fa-arrow-up"></i> +5.2% 较上周
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-building text-purple-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 退款金额 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">退款金额</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">¥12,345.67</p>
+                                <p class="text-xs text-red-600 mt-1">
+                                    <i class="fa fa-arrow-up"></i> +3.1% 较上月
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-undo text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 图表区域 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 交易趋势图 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">交易趋势</h3>
+                            <div class="flex space-x-2">
+                                <button class="px-3 py-1 text-xs bg-primary text-white rounded-full">日</button>
+                                <button class="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-full">周</button>
+                                <button class="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-full">月</button>
+                            </div>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="transactionTrendChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 支付方式分布 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">支付方式分布</h3>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="paymentMethodChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 最近订单 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">最近订单</h3>
+                        <a href="#order-management" class="text-primary hover:text-primary/80 text-sm font-medium">查看全部</a>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200">
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">订单号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">金额</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">支付方式</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">PAY20240520001</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户001</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥123.45</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">微信支付</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">成功</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-20 10:30</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewOrderDetail('PAY20240520001')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="refundOrder('PAY20240520001')" class="text-red-600 hover:text-red-700 text-sm">退款</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">PAY20240520002</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户002</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥678.90</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">支付宝</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">成功</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-20 10:28</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewOrderDetail('PAY20240520002')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="refundOrder('PAY20240520002')" class="text-red-600 hover:text-red-700 text-sm">退款</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">PAY20240520003</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户003</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥456.78</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">银联支付</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-warning">处理中</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-20 10:25</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewOrderDetail('PAY20240520003')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="cancelOrder('PAY20240520003')" class="text-orange-600 hover:text-orange-700 text-sm">取消</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 订单管理 -->
+            <div id="order-management" class="section-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">订单管理</h3>
+                        <div class="flex space-x-3">
+                            <button onclick="exportOrders()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-download mr-2"></i>导出
+                            </button>
+                            <button onclick="batchOperation()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-cog mr-2"></i>批量操作
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 搜索筛选 -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">订单号</label>
+                            <input type="text" id="order-no-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入订单号">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">商户号</label>
+                            <input type="text" id="merchant-no-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户号">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">支付方式</label>
+                            <select id="payment-method-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">全部</option>
+                                <option value="WECHAT">微信支付</option>
+                                <option value="ALIPAY">支付宝</option>
+                                <option value="UNIONPAY">银联支付</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">订单状态</label>
+                            <select id="order-status-select" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">全部</option>
+                                <option value="SUCCESS">支付成功</option>
+                                <option value="PROCESSING">处理中</option>
+                                <option value="FAILED">支付失败</option>
+                                <option value="REFUNDED">已退款</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">开始时间</label>
+                            <input type="date" id="start-time-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">结束时间</label>
+                            <input type="date" id="end-time-input" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                        <div class="flex items-end space-x-3">
+                            <button onclick="searchOrders()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-search mr-2"></i>搜索
+                            </button>
+                            <button onclick="resetOrderFilters()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-bullseye mr-2"></i>重置
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 订单列表 -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-table-header">
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                        <input type="checkbox" class="rounded border-gray-300 text-primary focus:ring-primary">
+                                    </th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">订单号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户名称</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">金额</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">支付方式</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200" id="order-list-body">
+                                <!-- 订单列表将通过JavaScript动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- 分页 -->
+                    <div class="flex items-center justify-between mt-6">
+                        <div class="text-sm text-gray-600">
+                            显示第 <span class="font-medium">1</span> 到 <span class="font-medium">10</span> 条，共 <span class="font-medium">124</span> 条记录
+                        </div>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50">上一页</button>
+                            <button class="px-3 py-1 border border-primary bg-primary text-white rounded">1</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50">2</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50">3</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50">...</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50">13</button>
+                            <button class="px-3 py-1 border border-gray-300 rounded text-gray-600 hover:bg-gray-50">下一页</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 在途订单 -->
+            <div id="in-transit-orders" class="section-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">在途订单</h3>
+                        <button onclick="exportInTransitOrders()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                            <i class="fa fa-download mr-2"></i>导出
+                        </button>
+                    </div>
+                    
+                    <!-- 搜索筛选 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">订单号</label>
+                            <input type="text" id="in-transit-order-no" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入订单号">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">商户号</label>
+                            <input type="text" id="in-transit-merchant-no" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户号">
+                        </div>
+                        <div class="flex items-end space-x-3">
+                            <button onclick="searchInTransitOrders()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-search mr-2"></i>搜索
+                            </button>
+                            <button onclick="resetInTransitFilters()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-bullseye mr-2"></i>重置
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 在途订单列表 -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-table-header">
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">订单号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户名称</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">金额</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">支付方式</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">预计完成时间</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">PAY20240520004</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER004</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户004</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥890.12</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">微信支付</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-warning">处理中</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-20 10:35</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-20 10:45</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewOrderDetail('PAY20240520004')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="cancelOrder('PAY20240520004')" class="text-orange-600 hover:text-orange-700 text-sm">取消</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">PAY20240520005</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER005</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户005</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥345.67</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">支付宝</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-warning">处理中</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-20 10:38</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-20 10:48</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewOrderDetail('PAY20240520005')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="cancelOrder('PAY20240520005')" class="text-orange-600 hover:text-orange-700 text-sm">取消</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 资金管理 -->
+            <div id="fund-management" class="section-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 账户余额 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">账户余额</h3>
+                        <div class="text-center">
+                            <div class="text-4xl font-bold text-gray-900 mb-2">¥123,456.78</div>
+                            <div class="text-sm text-gray-600 mb-6">可用余额</div>
+                            <button onclick="queryBalanceDetail()" class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-eye mr-2"></i>查看明细
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 充值记录 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">充值记录</h3>
+                            <button onclick="showRechargeModal()" class="px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 transition-colors">
+                                <i class="fa fa-plus mr-2"></i>充值
+                            </button>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">充值</div>
+                                    <div class="text-xs text-gray-600">2024-05-20 09:30</div>
+                                </div>
+                                <div class="text-green-600 font-medium">+¥10,000.00</div>
+                            </div>
+                            <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">充值</div>
+                                    <div class="text-xs text-gray-600">2024-05-19 14:20</div>
+                                </div>
+                                <div class="text-green-600 font-medium">+¥5,000.00</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 提现记录 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">提现记录</h3>
+                        <button onclick="showWithdrawalModal()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                            <i class="fa fa-plus mr-2"></i>提现
+                        </button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-table-header">
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">提现单号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">金额</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">申请时间</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">到账时间</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">WIT20240519001</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥8,000.00</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">已到账</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-19 10:00</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-19 10:30</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewWithdrawalDetail('WIT20240519001')" class="text-primary hover:text-primary/80 text-sm">查看</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">WIT20240518001</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥12,000.00</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">已到账</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-18 15:20</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-18 15:50</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewWithdrawalDetail('WIT20240518001')" class="text-primary hover:text-primary/80 text-sm">查看</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 开户进件 -->
+            <div id="account-opening" class="section-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">开户进件</h3>
+                        <div class="flex space-x-3">
+                            <button onclick="showBatchAccountOpeningModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-upload mr-2"></i>批量开户
+                            </button>
+                            <button onclick="showSingleAccountOpeningModal()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-plus mr-2"></i>单个开户
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 搜索筛选 -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">商户号</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户号">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">商户名称</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户名称">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">审核状态</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">全部</option>
+                                <option value="PENDING">待审核</option>
+                                <option value="APPROVED">审核通过</option>
+                                <option value="REJECTED">审核拒绝</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end space-x-3">
+                            <button onclick="searchAccountOpening()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-search mr-2"></i>搜索
+                            </button>
+                            <button onclick="resetAccountOpeningFilters()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-bullseye mr-2"></i>重置
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 开户列表 -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-table-header">
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户名称</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">联系人</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">联系电话</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">开户银行</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">审核状态</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">提交时间</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER006</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户006</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">张三</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">138****1234</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">工商银行</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-warning">待审核</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-20 09:00</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewAccountOpeningDetail('MER006')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="approveAccountOpening('MER006')" class="text-green-600 hover:text-green-700 text-sm mr-2">通过</button>
+                                        <button onclick="rejectAccountOpening('MER006')" class="text-red-600 hover:text-red-700 text-sm">拒绝</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER007</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户007</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">李四</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">139****5678</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">建设银行</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">审核通过</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-19 16:30</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewAccountOpeningDetail('MER007')" class="text-primary hover:text-primary/80 text-sm">查看</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 商户管理 -->
+            <div id="merchant-management" class="section-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">商户管理</h3>
+                        <div class="flex space-x-3">
+                            <button onclick="exportMerchants()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-download mr-2"></i>导出
+                            </button>
+                            <button onclick="showAddMerchantModal()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-plus mr-2"></i>添加商户
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 搜索筛选 -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">商户号</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户号">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">商户名称</label>
+                            <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户名称">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">商户状态</label>
+                            <select class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">全部</option>
+                                <option value="ACTIVE">正常</option>
+                                <option value="INACTIVE">禁用</option>
+                                <option value="SUSPENDED">暂停</option>
+                            </select>
+                        </div>
+                        <div class="flex items-end space-x-3">
+                            <button onclick="searchMerchants()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-search mr-2"></i>搜索
+                            </button>
+                            <button onclick="resetMerchantFilters()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-bullseye mr-2"></i>重置
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 商户列表 -->
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-table-header">
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户名称</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">联系人</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">联系电话</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户类型</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">创建时间</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER001</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户001</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">张三</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">138****1234</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">企业商户</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">正常</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-01 10:00</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewMerchantDetail('MER001')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="editMerchant('MER001')" class="text-blue-600 hover:text-blue-700 text-sm mr-2">编辑</button>
+                                        <button onclick="changeMerchantStatus('MER001', 'SUSPENDED')" class="text-orange-600 hover:text-orange-700 text-sm">暂停</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER002</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户002</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">李四</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">139****5678</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">个体商户</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">正常</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">2024-05-02 14:30</td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewMerchantDetail('MER002')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="editMerchant('MER002')" class="text-blue-600 hover:text-blue-700 text-sm mr-2">编辑</button>
+                                        <button onclick="changeMerchantStatus('MER002', 'SUSPENDED')" class="text-orange-600 hover:text-orange-700 text-sm">暂停</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 对账管理 -->
+            <div id="reconciliation" class="section-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 对账统计 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">对账统计</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">今日对账笔数</span>
+                                <span class="text-lg font-bold text-gray-900">156</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">今日对账金额</span>
+                                <span class="text-lg font-bold text-gray-900">¥123,456.78</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">成功率</span>
+                                <span class="text-lg font-bold text-success">98.5%</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-sm text-gray-600">异常处理</span>
+                                <span class="text-lg font-bold text-warning">5</span>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <button onclick="startReconciliation()" class="w-full px-4 py-2 bg-success text-white rounded-lg hover:bg-success/90 transition-colors">
+                                <i class="fa fa-play mr-2"></i>开始对账
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 快捷操作 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">对账操作</h3>
+                        <div class="space-y-3">
+                            <button onclick="downloadReconciliationFile()" class="w-full px-4 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors flex items-center justify-center">
+                                <i class="fa fa-download mr-2"></i>下载对账文件
+                            </button>
+                            <button onclick="viewReconciliationDetail('')" class="w-full px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center">
+                                <i class="fa fa-eye mr-2"></i>查看对账详细
+                            </button>
+                            <button onclick="exportReconciliation()" class="w-full px-4 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center">
+                                <i class="fa fa-table mr-2"></i>导出对账结果
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 对账记录 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">对账记录</h3>
+                        <div class="flex space-x-3">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">对账日期</label>
+                                <input type="date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+                            <div class="flex items-end">
+                                <button onclick="searchReconciliation()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                    <i class="fa fa-search mr-2"></i>搜索
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-table-header">
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">对账日期</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">批次号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">通道</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">总笔数</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">成功笔数</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">失败笔数</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">2024-05-20</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">REC20240520001</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">微信支付</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">120</td>
+                                    <td class="py-3 px-4 text-sm text-green-600">119</td>
+                                    <td class="py-3 px-4 text-sm text-red-600">1</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">对账成功</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewReconciliationDetail('REC20240520001')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="downloadReconciliationFile('REC20240520001')" class="text-blue-600 hover:text-blue-700 text-sm">下载</button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">2024-05-20</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">REC20240520002</td>
+                                    <td class="py-3 px-4 text-sm text-gray-600">支付宝</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">85</td>
+                                    <td class="py-3 px-4 text-sm text-green-600">85</td>
+                                    <td class="py-3 px-4 text-sm text-red-600">0</td>
+                                    <td class="py-3 px-4">
+                                        <span class="status-success">对账成功</span>
+                                    </td>
+                                    <td class="py-3 px-4">
+                                        <button onclick="viewReconciliationDetail('REC20240520002')" class="text-primary hover:text-primary/80 text-sm mr-2">查看</button>
+                                        <button onclick="downloadReconciliationFile('REC20240520002')" class="text-blue-600 hover:text-blue-700 text-sm">下载</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 交易统计 -->
+            <div id="transaction-statistics" class="section-content hidden">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <!-- 交易总额 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">交易总额</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">¥12,345,678.90</p>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fa fa-arrow-up"></i> +15.2% 较上月
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-line-chart text-blue-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 订单数量 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">订单总数</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">12,345</p>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fa fa-arrow-up"></i> +12.8% 较上月
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-shopping-cart text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 退款金额 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">退款金额</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">¥123,456.78</p>
+                                <p class="text-xs text-red-600 mt-1">
+                                    <i class="fa fa-arrow-up"></i> +3.2% 较上月
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-undo text-red-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 成功率 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover-lift">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-sm font-medium text-gray-600">支付成功率</p>
+                                <p class="text-2xl font-bold text-gray-900 mt-1">98.5%</p>
+                                <p class="text-xs text-green-600 mt-1">
+                                    <i class="fa fa-arrow-up"></i> +0.3% 较上月
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fa fa-check-circle text-green-600 text-xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 图表区域 -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 交易趋势图 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">交易趋势</h3>
+                            <div class="flex space-x-2">
+                                <button onclick="changeChartPeriod('day')" class="px-3 py-1 text-xs bg-primary text-white rounded-full">日</button>
+                                <button onclick="changeChartPeriod('week')" class="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-full">周</button>
+                                <button onclick="changeChartPeriod('month')" class="px-3 py-1 text-xs text-gray-600 hover:bg-gray-100 rounded-full">月</button>
+                            </div>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="transactionChart"></canvas>
+                        </div>
+                    </div>
+                    
+                    <!-- 支付方式分布 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-lg font-semibold text-gray-900">支付方式分布</h3>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fa fa-ellipsis-v"></i>
+                            </button>
+                        </div>
+                        <div class="h-64">
+                            <canvas id="paymentChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 商户排名 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">商户交易排名</h3>
+                        <select class="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="day">今日</option>
+                            <option value="week">本周</option>
+                            <option value="month" selected>本月</option>
+                        </select>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead>
+                                <tr class="border-b border-gray-200 bg-table-header">
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">排名</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户号</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">商户名称</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">交易金额</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">订单数量</th>
+                                    <th class="text-left py-3 px-4 text-xs font-medium text-gray-500 uppercase tracking-wider">增长率</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-gray-200">
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">
+                                        <span class="w-6 h-6 bg-yellow-100 text-yellow-800 rounded-full flex items-center justify-center text-xs font-bold">1</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER001</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户001</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥1,234,567.89</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">1,234</td>
+                                    <td class="py-3 px-4 text-sm text-green-600">+15.2%</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">
+                                        <span class="w-6 h-6 bg-gray-200 text-gray-800 rounded-full flex items-center justify-center text-xs font-bold">2</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER002</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户002</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥987,654.32</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">987</td>
+                                    <td class="py-3 px-4 text-sm text-green-600">+12.8%</td>
+                                </tr>
+                                <tr class="hover:bg-gray-50 transition-colors">
+                                    <td class="py-3 px-4 text-sm text-gray-900">
+                                        <span class="w-6 h-6 bg-orange-100 text-orange-800 rounded-full flex items-center justify-center text-xs font-bold">3</span>
+                                    </td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">MER003</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">测试商户003</td>
+                                    <td class="py-3 px-4 text-sm font-medium text-gray-900">¥765,432.10</td>
+                                    <td class="py-3 px-4 text-sm text-gray-900">765</td>
+                                    <td class="py-3 px-4 text-sm text-green-600">+8.5%</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 系统设置 -->
+            <div id="system-settings" class="section-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- API配置 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">API配置</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">API密钥</label>
+                                <input type="text" id="api-key" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" value="sk_test_51H7k...">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">API密钥状态</label>
+                                <div class="flex items-center">
+                                    <span class="status-success mr-2">已启用</span>
+                                    <button onclick="generateNewApiKey()" class="text-primary hover:text-primary/80 text-sm">
+                                        <i class="fa fa-bullseye mr-1"></i>重置
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">回调地址</label>
+                                <input type="text" id="callback-url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="https://example.com/callback">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">通知地址</label>
+                                <input type="text" id="notify-url" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="https://example.com/notify">
+                            </div>
+                        </div>
+                        <div class="mt-6 flex space-x-3">
+                            <button onclick="saveApiConfig()" class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-save mr-2"></i>保存配置
+                            </button>
+                            <button onclick="testApiConnection()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                <i class="fa fa-bullseye mr-2"></i>测试
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 支付配置 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">支付配置</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">支付超时时间</label>
+                                <select id="payment-timeout" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="300">5分钟</option>
+                                    <option value="600" selected>10分钟</option>
+                                    <option value="900">15分钟</option>
+                                    <option value="1800">30分钟</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">退款时效</label>
+                                <select id="refund-timeout" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="1">1天内</option>
+                                    <option value="3" selected>3天内</option>
+                                    <option value="7">7天内</option>
+                                    <option value="30">30天内</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">手续费率(%)</label>
+                                <input type="number" id="fee-rate" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" value="0.6" step="0.01">
+                            </div>
+                            <div>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="enable-sandbox" class="rounded border-gray-300 text-primary focus:ring-primary">
+                                    <span class="ml-2 text-sm text-gray-700">启用沙盒模式</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <button onclick="savePaymentConfig()" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-save mr-2"></i>保存配置
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 安全设置 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">安全设置</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">登录密码有效期</label>
+                                <select id="password-expiry" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="30">30天</option>
+                                    <option value="90" selected>90天</option>
+                                    <option value="180">180天</option>
+                                    <option value="365">365天</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">登录失败次数限制</label>
+                                <select id="login-fail-limit" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                                    <option value="3">3次</option>
+                                    <option value="5" selected>5次</option>
+                                    <option value="10">10次</option>
+                                    <option value="0">无限制</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="enable-2fa" class="rounded border-gray-300 text-primary focus:ring-primary" checked>
+                                    <span class="ml-2 text-sm text-gray-700">启用双因子认证</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="flex items-center">
+                                    <input type="checkbox" id="enable-ip-restriction" class="rounded border-gray-300 text-primary focus:ring-primary">
+                                    <span class="ml-2 text-sm text-gray-700">启用IP限制</span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="mt-6">
+                            <button onclick="saveSecurityConfig()" class="w-full px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                                <i class="fa fa-save mr-2"></i>保存配置
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 其他页面占位符 -->
+            <div id="merchant-list" class="section-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">商户列表</h3>
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fa fa-building text-4xl mb-4"></i>
+                        <p>商户列表页面内容</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="app-list" class="section-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">应用列表</h3>
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fa fa-mobile text-4xl mb-4"></i>
+                        <p>应用列表页面内容</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="onboarding-management" class="section-content hidden">
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">进件管理</h3>
+                    <div class="text-center py-12 text-gray-500">
+                        <i class="fa fa-user-plus text-4xl mb-4"></i>
+                        <p>进件管理页面内容</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 更多页面占位符... -->
+        </main>
+    </div>
+    
+    <!-- 加载中遮罩 -->
+    <div id="loading" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-8 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary mx-auto mb-4"></div>
+            <p class="text-gray-700">处理中...</p>
+        </div>
+    </div>
+    
+    <!-- 模态框 -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg w-full max-w-md mx-4">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="modal-title" class="text-lg font-semibold text-gray-900">提示</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fa fa-times"></i>
+                    </button>
+                </div>
+                <div id="modal-content">
+                    <!-- 模态框内容 -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 消息提示 -->
+    <div id="toast" class="fixed top-4 right-4 bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg transform translate-x-full transition-transform duration-300 z-50">
+        <span id="toast-message"></span>
+    </div>
+    
+    <script>
+        // 当前激活的菜单项
+        let currentSection = 'dashboard';
+        let activeNavItem = null;
+        
+        // 切换侧边栏
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+        }
+        
+        // 切换子菜单
+        function toggleSubmenu(submenuId) {
+            const submenu = document.getElementById(submenuId);
+            const arrow = document.getElementById(submenuId.replace('submenu', 'arrow'));
+            
+            submenu.classList.toggle('hidden');
+            arrow.classList.toggle('rotate-180');
+        }
+        
+        // 切换用户菜单
+        function toggleUserMenu() {
+            const userMenu = document.getElementById('user-menu');
+            userMenu.classList.toggle('hidden');
+        }
+        
+        // 显示指定页面
+        function showSection(sectionName) {
+            // 隐藏所有页面
+            document.querySelectorAll('.section-content').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // 显示指定页面
+            const targetSection = document.getElementById(sectionName);
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+            }
+            
+            // 更新导航状态
+            updateNavigationState(sectionName);
+            
+            // 更新页面标题
+            updateSectionTitle(sectionName);
+            
+            currentSection = sectionName;
+            
+            // 移动端自动隐藏侧边栏
+            if (window.innerWidth < 1024) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+            
+            // 如果是交易统计页面，初始化图表
+            if (sectionName === 'dashboard' || sectionName === 'transaction-statistics') {
+                setTimeout(() => {
+                    createTransactionTrendChart();
+                    createPaymentMethodChart();
+                }, 100);
+            }
+        }
+        
+        // 更新导航状态
+        function updateNavigationState(sectionName) {
+            // 移除所有菜单项的激活状态
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('nav-item-active');
+                item.classList.add('nav-item-inactive');
+            });
+            
+            // 找到对应的菜单项并激活
+            const navLinks = document.querySelectorAll('.nav-item');
+            navLinks.forEach(link => {
+                const href = link.getAttribute('href');
+                if (href === '#' + sectionName) {
+                    link.classList.remove('nav-item-inactive');
+                    link.classList.add('nav-item-active');
+                    activeNavItem = link;
+                    
+                    // 展开父菜单
+                    const parentSubmenu = link.closest('[id$="-submenu"]');
+                    if (parentSubmenu) {
+                        parentSubmenu.classList.remove('hidden');
+                        const parentArrow = document.getElementById(parentSubmenu.id.replace('submenu', 'arrow'));
+                        if (parentArrow) {
+                            parentArrow.classList.add('rotate-180');
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 更新页面标题
+        function updateSectionTitle(sectionName) {
+            const titles = {
+                'dashboard': { title: '主页', subtitle: '欢迎使用支付管理系统' },
+                'order-management': { title: '订单管理', subtitle: '管理所有支付订单' },
+                'in-transit-orders': { title: '在途订单', subtitle: '处理中的订单' },
+                'fund-management': { title: '资金管理', subtitle: '账户余额和资金流水' },
+                'account-opening': { title: '开户进件', subtitle: '商户开户申请管理' },
+                'merchant-management': { title: '商户管理', subtitle: '管理商户信息' },
+                'reconciliation': { title: '对账管理', subtitle: '交易对账和清算' },
+                'transaction-statistics': { title: '交易统计', subtitle: '业务数据分析' },
+                'system-settings': { title: '系统设置', subtitle: '系统参数配置' },
+                'merchant-list': { title: '商户列表', subtitle: '管理所有商户信息' },
+                'app-list': { title: '应用列表', subtitle: '管理商户应用配置' },
+                'onboarding-management': { title: '进件管理', subtitle: '商户进件审核流程' }
+            };
+            
+            const titleInfo = titles[sectionName] || { title: sectionName, subtitle: '' };
+            document.getElementById('section-title').textContent = titleInfo.title;
+            document.getElementById('section-subtitle').textContent = titleInfo.subtitle;
+        }
+        
+        // 显示模态框
+        function showModal(title, content) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-content').innerHTML = content;
+            document.getElementById('modal').classList.remove('hidden');
+        }
+        
+        // 关闭模态框
+        function closeModal() {
+            document.getElementById('modal').classList.add('hidden');
+        }
+        
+        // 显示加载中
+        function showLoading() {
+            document.getElementById('loading').classList.remove('hidden');
+        }
+        
+        // 隐藏加载中
+        function hideLoading() {
+            document.getElementById('loading').classList.add('hidden');
+        }
+        
+        // 显示消息提示
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toastMessage.textContent = message;
+            toast.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transform transition-transform duration-300 z-50 ${
+                type === 'success' ? 'bg-green-600 text-white' : 
+                type === 'error' ? 'bg-red-600 text-white' : 
+                'bg-gray-900 text-white'
+            }`;
+            
+            // 显示
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 100);
+            
+            // 隐藏
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+            }, 3000);
+        }
+        
+        // 创建交易趋势图
+        function createTransactionTrendChart() {
+            const ctx = document.getElementById('transactionTrendChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: '交易金额',
+                        data: [12000, 19000, 30000, 50000, 35000, 42000, 58000],
+                        borderColor: '#165DFF',
+                        backgroundColor: 'rgba(22, 93, 255, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // 创建支付方式分布图
+        function createPaymentMethodChart() {
+            const ctx = document.getElementById('paymentMethodChart');
+            if (!ctx) return;
+            
+            new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['微信支付', '支付宝', '银联支付', '其他'],
+                    datasets: [{
+                        data: [45, 35, 15, 5],
+                        backgroundColor: [
+                            '#10B981',
+                            '#3B82F6',
+                            '#F59E0B',
+                            '#6B7280'
+                        ],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        }
+                    },
+                    cutout: '70%'
+                }
+            });
+        }
+        
+        // 订单相关功能
+        function viewOrderDetail(orderNo) {
+            showModal('订单详情', `
+                <div class="space-y-4">
+                    <div class="border-l-4 border-primary pl-4">
+                        <p class="text-sm font-medium text-gray-800">订单号</p>
+                        <p class="text-lg font-semibold">${orderNo}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">商户号</p>
+                            <p class="font-medium">MER001</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">商户名称</p>
+                            <p class="font-medium">测试商户001</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">交易金额</p>
+                            <p class="text-lg font-bold text-green-600">¥123.45</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">支付方式</p>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">微信支付</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">订单状态</p>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">支付成功</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">创建时间</p>
+                            <p class="font-medium">2024-05-20 10:30:00</p>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function refundOrder(orderNo) {
+            if (confirm(`确认要退款订单 ${orderNo} 吗？`)) {
+                showLoading();
+                setTimeout(() => {
+                    hideLoading();
+                    showToast('退款申请已提交');
+                }, 2000);
+            }
+        }
+        
+        function cancelOrder(orderNo) {
+            if (confirm(`确认要取消订单 ${orderNo} 吗？`)) {
+                showLoading();
+                setTimeout(() => {
+                    hideLoading();
+                    showToast('订单取消成功');
+                }, 2000);
+            }
+        }
+        
+        function exportOrders() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('订单导出成功');
+            }, 1000);
+        }
+        
+        function searchOrders() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('订单搜索完成');
+            }, 1000);
+        }
+        
+        function resetOrderFilters() {
+            const container = document.getElementById('order-management');
+            if (container) {
+                container.querySelectorAll('select, input').forEach(el => {
+                    if (el.type === 'text' || el.type === 'date') {
+                        el.value = '';
+                    } else if (el.type === 'select-one') {
+                        el.selectedIndex = 0;
+                    }
+                });
+            }
+        }
+        
+        // 资金管理相关功能
+        function queryBalanceDetail() {
+            showModal('余额明细', `
+                <div class="space-y-4">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-gray-900">¥123,456.78</div>
+                        <div class="text-sm text-gray-600">当前可用余额</div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">订单收入</div>
+                                <div class="text-xs text-gray-600">2024-05-20 10:30</div>
+                            </div>
+                            <div class="text-green-600 font-medium">+¥123.45</div>
+                        </div>
+                        <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                            <div>
+                                <div class="text-sm font-medium text-gray-900">提现</div>
+                                <div class="text-xs text-gray-600">2024-05-19 15:20</div>
+                            </div>
+                            <div class="text-red-600 font-medium">-¥8,000.00</div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function showRechargeModal() {
+            showModal('充值', `
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">充值金额 <span class="text-red-500">*</span></label>
+                        <input type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入充值金额">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">充值方式 <span class="text-red-500">*</span></label>
+                        <select required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择充值方式</option>
+                            <option value="BANK">银行转账</option>
+                            <option value="ALIPAY">支付宝</option>
+                            <option value="WECHAT">微信支付</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+                        <button type="submit" onclick="submitRecharge()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">确认充值</button>
+                    </div>
+                </form>
+            `);
+        }
+        
+        function submitRecharge() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                closeModal();
+                showToast('充值申请已提交');
+            }, 1500);
+        }
+        
+        function showWithdrawalModal() {
+            showModal('提现', `
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">提现金额 <span class="text-red-500">*</span></label>
+                        <input type="number" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入提现金额">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">收款账户 <span class="text-red-500">*</span></label>
+                        <select required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择收款账户</option>
+                            <option value="BANK001">招商银行(****1234)</option>
+                            <option value="BANK002">工商银行(****5678)</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+                        <button type="submit" onclick="submitWithdrawal()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">确认提现</button>
+                    </div>
+                </form>
+            `);
+        }
+        
+        function submitWithdrawal() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                closeModal();
+                showToast('提现申请已提交');
+            }, 1500);
+        }
+        
+        function viewWithdrawalDetail(withdrawalNo) {
+            showModal('提现详情', `
+                <div class="space-y-4">
+                    <div class="border-l-4 border-primary pl-4">
+                        <p class="text-sm font-medium text-gray-800">提现单号</p>
+                        <p class="text-lg font-semibold">${withdrawalNo}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">提现金额</p>
+                            <p class="text-lg font-bold text-red-600">¥8,000.00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">手续费</p>
+                            <p class="font-medium">¥8.00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">到账金额</p>
+                            <p class="font-medium">¥7,992.00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">提现状态</p>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">已到账</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">申请时间</p>
+                            <p class="font-medium">2024-05-19 10:00:00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">到账时间</p>
+                            <p class="font-medium">2024-05-19 10:30:00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">收款账户</p>
+                            <p class="font-medium">招商银行(****1234)</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">备注</p>
+                            <p class="font-medium">正常提现</p>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        // 开户进件相关功能
+        function showBatchAccountOpeningModal() {
+            showModal('批量开户', `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">上传开户文件 <span class="text-red-500">*</span></label>
+                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-primary transition-colors cursor-pointer">
+                            <i class="fa fa-cloud-upload text-3xl text-gray-400 mb-2"></i>
+                            <p class="text-sm text-gray-600">点击上传或拖拽文件至此处</p>
+                            <p class="text-xs text-gray-500 mt-1">支持格式：Excel (.xlsx)，最大10MB</p>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">开户银行 <span class="text-red-500">*</span></label>
+                        <select required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择开户银行</option>
+                            <option value="PINGAN">平安银行</option>
+                            <option value="ICBC">工商银行</option>
+                            <option value="ABC">农业银行</option>
+                            <option value="BOC">中国银行</option>
+                            <option value="CCB">建设银行</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+                        <button type="button" onclick="submitBatchAccountOpening()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">开始开户</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function showSingleAccountOpeningModal() {
+            showModal('单个开户', `
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">商户号 <span class="text-red-500">*</span></label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户号">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">商户名称 <span class="text-red-500">*</span></label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户名称">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">联系人 <span class="text-red-500">*</span></label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入联系人姓名">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">联系电话 <span class="text-red-500">*</span></label>
+                        <input type="tel" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入联系电话">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">开户银行 <span class="text-red-500">*</span></label>
+                        <select required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择开户银行</option>
+                            <option value="PINGAN">平安银行</option>
+                            <option value="ICBC">工商银行</option>
+                            <option value="ABC">农业银行</option>
+                            <option value="BOC">中国银行</option>
+                            <option value="CCB">建设银行</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+                        <button type="submit" onclick="submitSingleAccountOpening()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">提交开户</button>
+                    </div>
+                </form>
+            `);
+        }
+        
+        function submitBatchAccountOpening() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                closeModal();
+                showToast('批量开户任务已启动');
+            }, 2000);
+        }
+        
+        function submitSingleAccountOpening() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                closeModal();
+                showToast('开户申请已提交');
+            }, 1500);
+        }
+        
+        function searchAccountOpening() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('开户记录搜索完成');
+            }, 1000);
+        }
+        
+        function resetAccountOpeningFilters() {
+            const container = document.getElementById('account-opening');
+            if (container) {
+                container.querySelectorAll('select, input').forEach(el => {
+                    if (el.type === 'text') {
+                        el.value = '';
+                    } else if (el.type === 'select-one') {
+                        el.selectedIndex = 0;
+                    }
+                });
+            }
+        }
+        
+        function viewAccountOpeningDetail(merchantNo) {
+            showModal('开户详情', `
+                <div class="space-y-4">
+                    <div class="border-l-4 border-primary pl-4">
+                        <p class="text-sm font-medium text-gray-800">商户号</p>
+                        <p class="text-lg font-semibold">${merchantNo}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">商户名称</p>
+                            <p class="font-medium">测试商户006</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">联系人</p>
+                            <p class="font-medium">张三</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">联系电话</p>
+                            <p class="font-medium">138****1234</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">开户银行</p>
+                            <p class="font-medium">工商银行</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">银行账号</p>
+                            <p class="font-medium">6222****1234</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">开户状态</p>
+                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">待审核</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">提交时间</p>
+                            <p class="font-medium">2024-05-20 09:00:00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">审核时间</p>
+                            <p class="font-medium">待审核</p>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function approveAccountOpening(merchantNo) {
+            if (confirm(`确认要通过商户 ${merchantNo} 的开户申请吗？`)) {
+                showLoading();
+                setTimeout(() => {
+                    hideLoading();
+                    showToast('开户申请已通过');
+                }, 1500);
+            }
+        }
+        
+        function rejectAccountOpening(merchantNo) {
+            showModal('拒绝开户', `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">拒绝原因 <span class="text-red-500">*</span></label>
+                        <textarea required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" rows="3" placeholder="请详细说明拒绝原因"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+                        <button type="button" onclick="confirmRejectAccountOpening('${merchantNo}')" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">确认拒绝</button>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function confirmRejectAccountOpening(merchantNo) {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                closeModal();
+                showToast('开户申请已拒绝');
+            }, 1500);
+        }
+        
+        // 商户管理相关功能
+        function showAddMerchantModal() {
+            showModal('添加商户', `
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">商户号 <span class="text-red-500">*</span></label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户号">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">商户名称 <span class="text-red-500">*</span></label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入商户名称">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">联系人 <span class="text-red-500">*</span></label>
+                        <input type="text" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入联系人姓名">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">联系电话 <span class="text-red-500">*</span></label>
+                        <input type="tel" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" placeholder="请输入联系电话">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">商户类型 <span class="text-red-500">*</span></label>
+                        <select required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">请选择商户类型</option>
+                            <option value="ENTERPRISE">企业商户</option>
+                            <option value="INDIVIDUAL">个体商户</option>
+                            <option value="PERSONAL">个人商户</option>
+                        </select>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+                        <button type="submit" onclick="submitAddMerchant()" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">添加商户</button>
+                    </div>
+                </form>
+            `);
+        }
+        
+        function submitAddMerchant() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                closeModal();
+                showToast('商户添加成功');
+            }, 1500);
+        }
+        
+        function exportMerchants() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('商户信息导出成功');
+            }, 1000);
+        }
+        
+        function searchMerchants() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('商户搜索完成');
+            }, 1000);
+        }
+        
+        function resetMerchantFilters() {
+            const container = document.getElementById('merchant-management');
+            if (container) {
+                container.querySelectorAll('select, input').forEach(el => {
+                    if (el.type === 'text') {
+                        el.value = '';
+                    } else if (el.type === 'select-one') {
+                        el.selectedIndex = 0;
+                    }
+                });
+            }
+        }
+        
+        function viewMerchantDetail(merchantNo) {
+            showModal('商户详情', `
+                <div class="space-y-4">
+                    <div class="border-l-4 border-primary pl-4">
+                        <p class="text-sm font-medium text-gray-800">商户号</p>
+                        <p class="text-lg font-semibold">${merchantNo}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">商户名称</p>
+                            <p class="font-medium">测试商户001</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">联系人</p>
+                            <p class="font-medium">张三</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">联系电话</p>
+                            <p class="font-medium">138****1234</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">联系邮箱</p>
+                            <p class="font-medium">zhangsan@example.com</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">商户类型</p>
+                            <p class="font-medium">企业商户</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">商户状态</p>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">正常</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">创建时间</p>
+                            <p class="font-medium">2024-05-01 10:00:00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">最后登录</p>
+                            <p class="font-medium">2024-05-20 09:30:00</p>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function editMerchant(merchantNo) {
+            showModal('编辑商户', `
+                <form class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">商户名称</label>
+                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" value="测试商户001">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">联系人</label>
+                        <input type="text" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" value="张三">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">联系电话</label>
+                        <input type="tel" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" value="138****1234">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">联系邮箱</label>
+                        <input type="email" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" value="zhangsan@example.com">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">备注</label>
+                        <textarea class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" rows="2" placeholder="请输入备注信息"></textarea>
+                    </div>
+                    <div class="flex justify-end space-x-3">
+                        <button type="button" onclick="closeModal()" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">取消</button>
+                        <button type="submit" onclick="submitMerchantEdit('${merchantNo}')" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">保存修改</button>
+                    </div>
+                </form>
+            `);
+        }
+        
+        function submitMerchantEdit(merchantNo) {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                closeModal();
+                showToast('商户信息修改成功');
+            }, 1500);
+        }
+        
+        function changeMerchantStatus(merchantNo, status) {
+            const statusText = status === 'SUSPENDED' ? '暂停' : status === 'ACTIVE' ? '启用' : '禁用';
+            if (confirm(`确认要${statusText}商户 ${merchantNo} 吗？`)) {
+                showLoading();
+                setTimeout(() => {
+                    hideLoading();
+                    showToast(`商户${statusText}成功`);
+                }, 1000);
+            }
+        }
+        
+        // 对账管理相关功能
+        function startReconciliation() {
+            if (confirm('确认要开始对账吗？')) {
+                showLoading();
+                setTimeout(() => {
+                    hideLoading();
+                    showToast('对账任务已启动');
+                }, 2000);
+            }
+        }
+        
+        function downloadReconciliationFile(batchNo = '') {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('对账文件下载成功');
+            }, 1500);
+        }
+        
+        function viewReconciliationDetail(batchNo) {
+            showModal('对账详情', `
+                <div class="space-y-4">
+                    <div class="border-l-4 border-primary pl-4">
+                        <p class="text-sm font-medium text-gray-800">批次号</p>
+                        <p class="text-lg font-semibold">${batchNo || 'REC20240520001'}</p>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <p class="text-sm text-gray-600">对账日期</p>
+                            <p class="font-medium">2024-05-20</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">对账通道</p>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">微信支付</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">总笔数</p>
+                            <p class="font-medium">156</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">成功笔数</p>
+                            <p class="font-medium text-green-600">156</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">失败笔数</p>
+                            <p class="font-medium text-red-600">0</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">对账状态</p>
+                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">对账成功</span>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">开始时间</p>
+                            <p class="font-medium">2024-05-20 02:00:00</p>
+                        </div>
+                        <div>
+                            <p class="text-sm text-gray-600">完成时间</p>
+                            <p class="font-medium">2024-05-20 02:30:00</p>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <h4 class="text-sm font-medium text-gray-800 mb-2">差异详情</h4>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">系统有记录，银行无记录</span>
+                                <span class="text-red-600">0笔</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">银行有记录，系统无记录</span>
+                                <span class="text-red-600">0笔</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `);
+        }
+        
+        function exportReconciliation() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('对账结果导出成功');
+            }, 1500);
+        }
+        
+        function searchReconciliation() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('对账记录搜索完成');
+            }, 1000);
+        }
+        
+        // 在途订单相关功能
+        function searchInTransitOrders() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('在途订单搜索完成');
+            }, 1000);
+        }
+        
+        function resetInTransitFilters() {
+            const container = document.getElementById('in-transit-orders');
+            if (container) {
+                container.querySelectorAll('select, input').forEach(el => {
+                    if (el.type === 'text') {
+                        el.value = '';
+                    } else if (el.type === 'select-one') {
+                        el.selectedIndex = 0;
+                    }
+                });
+            }
+        }
+        
+        function exportInTransitOrders() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('在途订单导出成功');
+            }, 1000);
+        }
+        
+        // 系统设置相关功能
+        function generateNewApiKey() {
+            if (confirm('确认要重置API密钥吗？重置后旧密钥将失效。')) {
+                showLoading();
+                setTimeout(() => {
+                    hideLoading();
+                    document.getElementById('api-key').value = 'sk_test_new_123456...';
+                    showToast('API密钥已重置');
+                }, 1500);
+            }
+        }
+        
+        function saveApiConfig() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('API配置保存成功');
+            }, 1000);
+        }
+        
+        function testApiConnection() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('API连接测试成功', 'success');
+            }, 2000);
+        }
+        
+        function savePaymentConfig() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('支付配置保存成功');
+            }, 1000);
+        }
+        
+        function saveSecurityConfig() {
+            showLoading();
+            setTimeout(() => {
+                hideLoading();
+                showToast('安全配置保存成功');
+            }, 1000);
+        }
+        
+        // 点击空白处关闭下拉菜单
+        document.addEventListener('click', function(e) {
+            const userMenu = document.getElementById('user-menu');
+            const userButton = e.target.closest('[onclick="toggleUserMenu()"]');
+            
+            if (!userButton && !userMenu.contains(e.target)) {
+                userMenu.classList.add('hidden');
+            }
+        });
+        
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 初始化主页
+            showSection('dashboard');
+            
+            // 窗口大小变化时处理
+            window.addEventListener('resize', function() {
+                if (window.innerWidth >= 1024) {
+                    document.getElementById('sidebar').classList.remove('-translate-x-full');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
